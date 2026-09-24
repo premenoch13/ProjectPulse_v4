@@ -1,26 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users2, FolderKanban, Timer, Loader2, RefreshCw, Hourglass } from "lucide-react";
+import { Users2, FolderKanban, Timer, Loader2, RefreshCw } from "lucide-react";
 import { COLORS, SHADOWS } from "../../constants/theme";
-import { callProjectFlow, callProjectResourceFlow, callDesignationFlow, callCurrencyFlow } from "../../api/flows";
+import { callProjectFlow, callProjectResourceFlow, callDesignationFlow, callCurrencyFlow, callBillingFlow, callBillingPeriodFlow, callProjectDocumentFlow } from "../../api/flows";
 import { useLookups } from "../project-allocation/hooks";
 import { ResourceUtilization } from "./ResourceUtilization";
 import { ProjectDetails } from "./ProjectDetails";
+import { TimesheetSummary } from "./TimesheetSummary";
 
 const TABS = [
   { key: "utilization", label: "Resource Utilization", icon: Users2 },
   { key: "projects", label: "Project Details", icon: FolderKanban },
   { key: "timesheet", label: "Timesheet Summary", icon: Timer },
 ];
-
-function ComingNext({ label }) {
-  return (
-    <div style={{ background: COLORS.card, border: `1px dashed ${COLORS.borderStrong}`, borderRadius: 16, padding: "60px 20px", textAlign: "center", color: COLORS.textMuted }}>
-      <Hourglass size={30} color={COLORS.accent} />
-      <div style={{ fontWeight: 700, fontSize: 16, color: COLORS.text, marginTop: 10 }}>{label}</div>
-      <div style={{ fontSize: 13, marginTop: 4 }}>This report module is coming next.</div>
-    </div>
-  );
-}
 
 export function ReportAnalysisPage() {
   const [tab, setTab] = useState("utilization");
@@ -29,15 +20,24 @@ export function ReportAnalysisPage() {
   const [resources, setResources] = useState([]);
   const [designations, setDesignations] = useState([]);
   const [currencies, setCurrencies] = useState([]);
+  const [billings, setBillings] = useState([]);
+  const [billingPeriods, setBillingPeriods] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const load = useCallback(() => {
     setLoading(true);
     setError("");
-    // Designations / currencies are optional extras — a failure there must not break the report.
+    // Designations / currencies / billing data are optional extras — a failure
+    // in any of them must not break the rest of the report. The Timesheet
+    // Summary tab reads the resource timesheet hours from Billing (same data
+    // the Billing screen shows) — this tab only reads, never writes.
     callDesignationFlow("LIST").then((x) => setDesignations(x.data || [])).catch(() => {});
     callCurrencyFlow("LIST").then((x) => setCurrencies(x.data || [])).catch(() => {});
+    callBillingFlow("LIST").then((x) => setBillings(x.data || [])).catch(() => {});
+    callBillingPeriodFlow("LIST").then((x) => setBillingPeriods(x.data || [])).catch(() => {});
+    callProjectDocumentFlow("LIST").then((x) => setDocuments(x.data || [])).catch(() => {});
     Promise.all([callProjectFlow("LIST"), callProjectResourceFlow("LIST")])
       .then(([p, r]) => { setProjects(p.data || []); setResources(r.data || []); })
       .catch((e) => setError(e.message || "Couldn't load report data."))
@@ -87,7 +87,7 @@ export function ReportAnalysisPage() {
           <>
             {tab === "utilization" && <ResourceUtilization projects={projects} resources={resources} lookups={lookups} />}
             {tab === "projects" && <ProjectDetails projects={projects} resources={resources} lookups={lookups} designations={designations} currencies={currencies} />}
-            {tab === "timesheet" && <ComingNext label="Timesheet Summary" />}
+            {tab === "timesheet" && <TimesheetSummary projects={projects} resources={resources} lookups={lookups} designations={designations} billings={billings} billingPeriods={billingPeriods} documents={documents} />}
           </>
         )}
       </div>
