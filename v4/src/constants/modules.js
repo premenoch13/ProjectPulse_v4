@@ -59,6 +59,8 @@ export const FINANCE_MODULES = [
   { key: "billing", label: "Billing", icon: Landmark, color: "#8B5CF6", implemented: true },
   { key: "billing-period", label: "Billing Periods", icon: CalendarClock, color: "#0EA5A4", implemented: true },
   { key: "link-invoice", label: "Link Invoice", icon: Receipt, color: "#EAB308", implemented: true },
+  // Timesheet Approval screen removed — timesheet hours now come from Billing
+  // and are summarized in Report Analysis → Timesheet Summary.
 ];
 
 
