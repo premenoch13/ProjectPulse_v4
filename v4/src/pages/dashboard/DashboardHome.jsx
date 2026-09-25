@@ -189,7 +189,7 @@ export function DashboardHome({ onOpenModule, user }) {
   const myAlloc = allResources.filter((r) => sameId(r.userId));
   const designation = (me?.jobTitle || "").trim();
   const role = isAdmin || inList(DESIGNATION_SCOPE.admin, designation) ? "admin" : inList(DESIGNATION_SCOPE.manager, designation) ? "manager" : "employee";
-  const roleLabel = designation || (role === "admin" ? "Administrator" : role === "manager" ? "Project Manager" : "Employee");
+  const roleLabel = role === "admin" ? "Administrator" : role === "manager" ? "Manager" : "Employee";
 
   const myProjectIds = role === "admin" ? null : new Set([...ledIds, ...myAlloc.map((r) => String(r.projectId))]);
   const inMine = (projectId) => !myProjectIds || myProjectIds.has(String(projectId));
@@ -366,6 +366,11 @@ export function DashboardHome({ onOpenModule, user }) {
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 999, fontSize: 12.5, fontWeight: 800, color: "#fff", letterSpacing: ".02em", background: role === "admin" ? "linear-gradient(135deg, #E11D48, #F97316)" : role === "manager" ? "linear-gradient(135deg, #7C3AED, #C026D3)" : "linear-gradient(135deg, #3B6FE0, #0EA5A4)", boxShadow: "0 4px 12px rgba(0,0,0,.25)", border: "1px solid rgba(255,255,255,.35)" }}>
                 {role === "admin" ? <ShieldCheck size={13} /> : role === "manager" ? <Crown size={13} /> : <UserRound size={13} />} {roleLabel}
               </span>
+              {designation && (
+                <span title="Designation" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 999, fontSize: 12.5, fontWeight: 700, color: "#fff", background: "rgba(255,255,255,.12)", border: "1px solid rgba(255,255,255,.28)" }}>
+                  <Briefcase size={13} /> {designation}
+                </span>
+              )}
             </div>
             <div className="pp-dash-sub">{scopeText}.</div>
           </div>
