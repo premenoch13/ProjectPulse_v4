@@ -29,7 +29,7 @@ export function UserPanel({ mode, data, departments, locations, designations, ro
       <div style={{ padding: 20, flex: 1, overflowY: "auto" }}>
         {restricted && mode !== "add" && (
           <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 14, padding: "8px 10px", background: "#F3F4F6", borderRadius: 8 }}>
-            This user is linked to existing records — only Designation, Role and Department can be changed.
+            This user is linked to existing records — only Designation, Role, Department, Email, Reporting Manager and Location can be changed.
           </div>
         )}
         <label style={labelStyle}>Emp ID*</label>
@@ -98,10 +98,10 @@ export function UserPanel({ mode, data, departments, locations, designations, ro
         })()}
 
         <label style={{ ...labelStyle, marginTop: 16 }}>Email*</label>
-        <input type="email" value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="e.g. jane.doe@company.com" disabled={restricted} style={{ ...inputStyle, ...lockedStyle }} />
+        <input type="email" value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="e.g. jane.doe@company.com" style={inputStyle} />
 
         <label style={{ ...labelStyle, marginTop: 16 }}>Reporting Manager</label>
-        <select value={form.reportingManagerId || ""} onChange={(e) => setForm({ ...form, reportingManagerId: e.target.value })} disabled={restricted} style={{ ...inputStyle, ...lockedStyle }}>
+        <select value={form.reportingManagerId || ""} onChange={(e) => setForm({ ...form, reportingManagerId: e.target.value })} style={inputStyle}>
           <option value="">Select manager</option>
           {activeOptions(allUsers, form.reportingManagerId).filter((u) => u.guid !== form.guid).map((u) => (
             <option key={u.guid} value={u.guid}>{u.firstName} {u.lastName}</option>
@@ -109,7 +109,7 @@ export function UserPanel({ mode, data, departments, locations, designations, ro
         </select>
 
         <label style={{ ...labelStyle, marginTop: 16 }}>Location</label>
-        <select value={form.locationId || ""} onChange={(e) => setForm({ ...form, locationId: e.target.value })} disabled={restricted} style={{ ...inputStyle, ...lockedStyle }}>
+        <select value={form.locationId || ""} onChange={(e) => setForm({ ...form, locationId: e.target.value })} style={inputStyle}>
           <option value="">Select location</option>
           {activeOptions(locations, form.locationId).map((l) => (
             <option key={l.id} value={l.id}>{l.name}</option>
