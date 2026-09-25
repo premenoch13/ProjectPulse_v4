@@ -7,11 +7,23 @@ import {
 } from "lucide-react";
 import { COLORS, inputStyle, labelStyle } from "../../constants/theme";
 import { activeOptions } from "../../utils/validation";
+import { getCurrentUserId } from "../../utils/session";
+import { usePermissions } from "../../context/PermissionContext";
 
 export function UserPanel({ mode, data, departments, locations, designations, roles, allUsers, saving, error, restricted, onCancel, onClose, onSubmit }) {
   const [form, setForm] = useState(data);
   useEffect(() => setForm(data), [data]);
   const lockedStyle = restricted ? { background: "#F3F4F6", color: COLORS.textMuted, cursor: "not-allowed" } : {};
+
+  // Email / Reporting Manager / Location on a linked (restricted) user can be
+  // changed only by an Admin — signed-in user's Designation is "Admin", or the
+  // projectpulse super-admin login.
+  const { isAdmin } = usePermissions();
+  const myId = String(getCurrentUserId() || "");
+  const me = (allUsers || []).find((u) => String(u.guid ?? u.id) === myId);
+  const isAdminUser = isAdmin || String(me?.jobTitle || "").trim().toLowerCase() === "admin";
+  const contactLocked = restricted && !isAdminUser;
+  const contactStyle = contactLocked ? { ...inputStyle, ...lockedStyle } : inputStyle;
 
   return (
     <div className="pp-panel" style={{
@@ -29,7 +41,7 @@ export function UserPanel({ mode, data, departments, locations, designations, ro
       <div style={{ padding: 20, flex: 1, overflowY: "auto" }}>
         {restricted && mode !== "add" && (
           <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 14, padding: "8px 10px", background: "#F3F4F6", borderRadius: 8 }}>
-            This user is linked to existing records — only Designation, Role, Department, Email, Reporting Manager and Location can be changed.
+            This user is linked to existing records — only Designation, Role and Department{isAdminUser ? ", plus Email, Reporting Manager and Location (Admin)," : ""} can be changed.
           </div>
         )}
         <label style={labelStyle}>Emp ID*</label>
@@ -98,10 +110,10 @@ export function UserPanel({ mode, data, departments, locations, designations, ro
         })()}
 
         <label style={{ ...labelStyle, marginTop: 16 }}>Email*</label>
-        <input type="email" value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="e.g. jane.doe@company.com" style={inputStyle} />
+        <input type="email" value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="e.g. jane.doe@company.com" disabled={contactLocked} style={contactStyle} />
 
         <label style={{ ...labelStyle, marginTop: 16 }}>Reporting Manager</label>
-        <select value={form.reportingManagerId || ""} onChange={(e) => setForm({ ...form, reportingManagerId: e.target.value })} style={inputStyle}>
+        <select value={form.reportingManagerId || ""} onChange={(e) => setForm({ ...form, reportingManagerId: e.target.value })} disabled={contactLocked} style={contactStyle}>
           <option value="">Select manager</option>
           {activeOptions(allUsers, form.reportingManagerId).filter((u) => u.guid !== form.guid).map((u) => (
             <option key={u.guid} value={u.guid}>{u.firstName} {u.lastName}</option>
@@ -109,7 +121,7 @@ export function UserPanel({ mode, data, departments, locations, designations, ro
         </select>
 
         <label style={{ ...labelStyle, marginTop: 16 }}>Location</label>
-        <select value={form.locationId || ""} onChange={(e) => setForm({ ...form, locationId: e.target.value })} style={inputStyle}>
+        <select value={form.locationId || ""} onChange={(e) => setForm({ ...form, locationId: e.target.value })} disabled={contactLocked} style={contactStyle}>
           <option value="">Select location</option>
           {activeOptions(locations, form.locationId).map((l) => (
             <option key={l.id} value={l.id}>{l.name}</option>
