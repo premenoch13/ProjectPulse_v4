@@ -23,7 +23,10 @@ function decodeHash(value) {
   return /^\$2[abxy]\$\d{2}\$/.test(s) ? s : "";
 }
 
-export function SignInPage({ onLogin, onGoToSignUp, onGoToForgotPassword }) {
+// "Create an account" is gone — accounts are created by an admin from
+// Admin -> Employee Details (username + an initial password set there),
+// and a user who forgets that password uses "Forgot password" below.
+export function SignInPage({ onLogin, onGoToForgotPassword }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -122,12 +125,9 @@ export function SignInPage({ onLogin, onGoToSignUp, onGoToForgotPassword }) {
               {busy ? "Signing in…" : "Sign in"}
             </button>
 
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, fontSize: 12.5 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16, fontSize: 12.5 }}>
               <button type="button" onClick={onGoToForgotPassword} style={{ background: "none", border: "none", color: COLORS.accent, cursor: "pointer", fontWeight: 600, padding: 0 }}>
                 Forgot password?
-              </button>
-              <button type="button" onClick={onGoToSignUp} style={{ background: "none", border: "none", color: COLORS.textMuted, cursor: "pointer", fontWeight: 600, padding: 0 }}>
-                Create an account
               </button>
             </div>
           </div>
