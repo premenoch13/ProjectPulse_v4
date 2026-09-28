@@ -26,6 +26,7 @@ import { ConfirmModal } from "../../components/common/ConfirmModal";
 import { EmptyState } from "../../components/common/EmptyState";
 import { COLORS, cardStyle, inputStyle } from "../../constants/theme";
 import { BillingFormPanel } from "./billingFormPanel";
+import { BillingPeriodPage } from "../billing-period/billingPeriodPage";
 import { logAudit } from "../../utils/audit";
 
 const EMPTY_FORM = {
@@ -60,6 +61,12 @@ export function BillingPage() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [decidingGuid, setDecidingGuid] = useState(""); // guid of the row an Approve/Reject click is in flight for
+  // Billing and Billing Periods are now one screen, switched by tab, instead
+  // of two separate nav entries — nothing about either screen's own logic
+  // changes, BillingPeriodPage is rendered exactly as it was under its own
+  // route (see constants/modules.js and AppShell.jsx for the nav-entry side
+  // of this change).
+  const [tab, setTab] = useState("billing");
 
   const refresh = useCallback(() => {
     setLoading(true);
@@ -88,7 +95,16 @@ export function BillingPage() {
     return p ? `${p.projectCode} — ${p.projectName}` : "—";
   };
   const billingTypeName = (id) => billingTypes.find((b) => String(b.id) === String(id))?.name || "—";
-  const periodName = (id) => billingPeriods.find((p) => String(p.id) === String(id))?.periodName || "—";
+  // Billing Period is now a static month name typed straight into the form
+  // (see billingFormPanel.jsx), not a BillingPeriod table row id — so there's
+  // nothing to look up. Old rows saved before this change still carry a real
+  // BillingPeriod id, so those are still resolved against the table for
+  // backward compatibility.
+  const periodName = (id) => {
+    if (!id) return "—";
+    const match = billingPeriods.find((p) => String(p.id ?? p.guid) === String(id));
+    return match ? match.periodName : String(id);
+  };
   const currencyCode = (id) => currencies.find((c) => String(c.id) === String(id))?.code || "";
   const approvalStatusName = (id) => approvalStatuses.find((s) => String(s.guid) === String(id))?.name || "Draft";
 
@@ -228,12 +244,48 @@ export function BillingPage() {
     );
   }
 
+  // Tab bar lives outside the "billing" tab's own return so it stays visible
+  // no matter which sub-screen is active. Switching to "periods" hands off
+  // to BillingPeriodPage untouched — its own Add/Edit panel, KPIs, search and
+  // delete-guard all keep working exactly as they did on their own route.
+  const tabBar = (
+    <div style={{ display: "flex", gap: 4, marginBottom: 18, borderBottom: `1px solid ${COLORS.border}` }}>
+      {[
+        { key: "billing", label: "Billing" },
+        { key: "periods", label: "Billing Periods" },
+      ].map((t) => (
+        <button
+          key={t.key}
+          onClick={() => setTab(t.key)}
+          style={{
+            padding: "10px 18px", fontSize: 13.5, fontWeight: 700, cursor: "pointer",
+            background: "none", border: "none", borderBottom: tab === t.key ? `2px solid ${COLORS.accent}` : "2px solid transparent",
+            color: tab === t.key ? COLORS.accent : COLORS.textMuted, marginBottom: -1,
+          }}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (tab === "periods") {
+    return (
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ padding: "26px 26px 0" }}>{tabBar}</div>
+        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+          <BillingPeriodPage />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
       <div style={{ flex: 1, padding: 26, overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
           <div>
-            <div style={{ fontFamily: "Sora, sans-serif", fontSize: 20, fontWeight: 700, color: COLORS.text }}>Billing</div>
+            <div style={{ fontFamily: "Sora, sans-serif", fontSize: 20, fontWeight: 700, color: COLORS.text }}>Timesheet Approval</div>
             <div style={{ color: COLORS.textMuted, fontSize: 13.5 }}>Submit and approve monthly T&M or Fixed Bid milestone billing</div>
           </div>
           <button
@@ -243,6 +295,8 @@ export function BillingPage() {
             <Plus size={15} /> Submit Billing
           </button>
         </div>
+
+        {tabBar}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, marginBottom: 16 }}>
           {kpis.map((k) => {
